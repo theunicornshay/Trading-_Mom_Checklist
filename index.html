@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Trading Mom" />
+  <meta name="theme-color" content="#946B84" />
+  <title>Trading Mom Checklist</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="icon" href="app_icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="app_icon.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    /* =============================================
+       COLOR PALETTE — The Trading Mom
+    ============================================= */
+    :root {
+      --mauve:      #946B84;   /* her logo background */
+      --mauve-deep: #7A5570;
+      --plum:       #5B4868;   /* headings, text accents */
+      --ink:        #4A3D52;   /* body text */
+      --muted:      #8C7B86;
+      --cream:      #F3E6D0;   /* her logo lettering */
+      --card:       rgba(255, 251, 246, 0.92);
+      --line:       rgba(148, 107, 132, 0.28);
+      --sage:       #5E9282;   /* yes / clear / long */
+      --berry:      #B3526B;   /* no / walk away / short */
+      --blush:      #EFE2DA;
+      --font:       'League Spartan', system-ui, sans-serif;
+      --mono:       'Space Mono', ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background: #E6D8CE;
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fixed gradient layer (same approach as the ICC app: survives iOS resizes) */
+    .bg-fixed {
+      position: fixed; inset: 0; z-index: -1;
+      background: linear-gradient(180deg, #A48C94 0%, #BFA9AB 30%, #D8C6C0 62%, #EADDD3 100%);
+    }
+
+    button { font-family: inherit; }
+    :focus-visible { outline: 2px solid var(--plum); outline-offset: 2px; }
+
+    /* =============================================
+       STICKY HEADER
+    ============================================= */
+    .sticky {
+      position: sticky; top: 0; z-index: 50;
+      padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 8px;
+      background: rgba(148, 107, 132, 0.92);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(243, 230, 208, 0.35);
+    }
+    .sticky-row { display: flex; align-items: center; gap: 10px; max-width: 480px; margin: 0 auto; }
+    .bar { flex: 1; height: 7px; border-radius: 99px; background: rgba(243, 230, 208, 0.45); overflow: hidden; }
+    .bar-fill { height: 100%; width: 0; border-radius: 99px; background: var(--cream); transition: width .4s cubic-bezier(.4,0,.2,1); }
+    .count { font-family: var(--mono); font-size: 12px; color: var(--cream); min-width: 44px; text-align: right; }
+    .btn-reset-sm {
+      background: none; border: 1.5px solid var(--cream); color: var(--cream);
+      border-radius: 99px; padding: 5px 13px 4px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .btn-reset-sm:active { transform: scale(.96); }
+    .status {
+      max-width: 480px; margin: 6px auto 0; font-size: 13px; font-weight: 600; text-align: center;
+      color: var(--cream); min-height: 16px;
+    }
+    .status.flag  { color: #FFE3E8; }
+    .status.clear { color: #E3F5EE; }
+    .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--cream); }
+    .status.flag .dot  { background: var(--berry); box-shadow: 0 0 0 2px #FFE3E8; }
+    .status.clear .dot { background: var(--sage); box-shadow: 0 0 0 2px #E3F5EE; }
+
+    .content { max-width: 480px; margin: 0 auto; padding: 16px 14px 40px; }
+
+    /* =============================================
+       HERO
+    ============================================= */
+    .hero {
+      text-align: center; padding: 6px 16px 22px; margin-bottom: 14px;
+      background: var(--mauve); border-radius: 28px;
+      box-shadow: 0 10px 30px rgba(91, 72, 104, 0.25);
+    }
+    .hero img { width: 150px; height: 150px; display: block; margin: 0 auto 2px; }
+    .hero h1 { font-size: 30px; font-weight: 800; color: var(--cream); letter-spacing: -0.01em; line-height: 1.05;
+      }
+    .hero p { font-size: 15px; color: rgba(243, 230, 208, 0.85); margin-top: 6px; }
+
+    .flow { display: flex; justify-content: center; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
+    .flow-step { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .flow-tf {
+      font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--plum);
+      background: var(--cream); border-radius: 99px; padding: 5px 12px;
+    }
+    .flow-q { font-size: 12px; color: rgba(243, 230, 208, 0.85); }
+    .flow-arrow { color: var(--cream); font-size: 14px; padding-top: 5px; }
+
+    /* =============================================
+       DIRECTION TOGGLE
+    ============================================= */
+    .toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .dir-btn {
+      border: 2px solid transparent; background: var(--card); border-radius: 18px;
+      padding: 12px 8px 11px; cursor: pointer; color: var(--plum);
+      display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all .2s;
+    }
+    .dir-btn svg { width: 22px; height: 22px; margin-bottom: 2px; }
+    .dir-btn .t { font-size: 16px; font-weight: 700; }
+    .dir-btn .c { font-size: 12.5px; color: var(--muted); }
+    .dir-btn.on { background: var(--plum); color: var(--cream); }
+    .dir-btn.on .c { color: rgba(243,230,208,.8); }
+    .dir-btn[data-dir="short"] svg { color: var(--berry); }
+    .dir-btn[data-dir="long"] svg { color: var(--sage); }
+    .dir-btn.on svg { color: var(--cream); }
+
+    /* =============================================
+       CARDS / SECTIONS
+    ============================================= */
+    .card {
+      background: var(--card); border-radius: 22px; margin-bottom: 14px; overflow: hidden;
+      box-shadow: 0 6px 22px rgba(91, 72, 104, 0.10);
+    }
+    .card-head {
+      display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; user-select: none;
+    }
+    .num {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: var(--mauve); color: var(--cream);
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; padding-top: 2px;
+      transition: background .25s;
+    }
+    .card.done .num { background: var(--sage); }
+    .head-text { flex: 1; min-width: 0; }
+    .head-q { font-size: 13px; color: var(--muted); font-style: italic; }
+    .head-title { font-size: 19px; font-weight: 700; color: var(--plum); line-height: 1.15; }
+    .tf {
+      font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--cream);
+      background: var(--plum); border-radius: 99px; padding: 4px 10px 3px; flex-shrink: 0;
+    }
+    .chev { width: 20px; height: 20px; color: var(--mauve); transition: transform .3s; flex-shrink: 0; }
+    .card.closed .chev { transform: rotate(180deg); }
+    .card-body { padding: 0 16px 16px; }
+    .card.closed .card-body { display: none; }
+
+    /* checklist rows */
+    .item {
+      display: flex; gap: 12px; align-items: flex-start; padding: 11px 2px;
+      border-top: 1px solid var(--line); cursor: pointer;
+    }
+    .item:first-child { border-top: none; }
+    .box {
+      width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0; margin-top: 1px;
+      border: 2px solid var(--mauve); display: flex; align-items: center; justify-content: center;
+      transition: all .18s;
+    }
+    .box svg { width: 13px; height: 11px; color: var(--cream); opacity: 0; transition: opacity .15s; }
+    .item.checked .box { background: var(--mauve); }
+    .item.checked .box svg { opacity: 1; }
+    .item-t { font-size: 16px; font-weight: 600; color: var(--ink); line-height: 1.3; padding-top: 3px; }
+    .item-d { font-size: 14px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+    .item.checked .item-t { color: var(--muted); }
+
+    /* yes / no gate */
+    .gate {
+      display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 12px 14px;
+      background: var(--blush); border-radius: 16px;
+    }
+    .gate-q { flex: 1; font-size: 15px; font-weight: 600; color: var(--plum); line-height: 1.3; }
+    .gate-btns { display: flex; gap: 6px; }
+    .gb {
+      border: 1.5px solid var(--mauve); background: transparent; color: var(--plum);
+      border-radius: 99px; padding: 6px 15px 5px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .gb.yes { background: var(--sage); border-color: var(--sage); color: #fff; }
+    .gb.no  { background: var(--berry); border-color: var(--berry); color: #fff; }
+    .gate-msg { display: none; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--berry); padding: 0 4px; }
+    .gate-msg.show { display: block; }
+
+    /* callouts */
+    .note {
+      margin-top: 10px; padding: 11px 14px; border-radius: 14px; font-size: 14.5px; line-height: 1.4;
+      background: rgba(148, 107, 132, 0.12); color: var(--plum); border-left: 4px solid var(--mauve);
+    }
+    .note.warn { background: rgba(179, 82, 107, 0.10); border-left-color: var(--berry); }
+    .note b { font-weight: 700; }
+
+    /* level inputs */
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 4px 4px; }
+    .field input, .field select {
+      width: 100%; font-family: var(--mono); font-size: 16px; color: var(--plum);
+      background: #fff; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px;
+      -webkit-appearance: none; appearance: none;
+    }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--mauve); }
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23946B84' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
+    }
+
+    /* setup chain */
+    .chain { display: flex; flex-wrap: wrap; gap: 5px 4px; align-items: center; margin-top: 6px; }
+    .chip { font-size: 12.5px; font-weight: 600; background: var(--mauve); color: var(--cream); border-radius: 99px; padding: 4px 9px 3px; }
+    .chip:nth-child(4n+3) { background: var(--mauve-deep); }
+    .chain .ar { color: var(--mauve); font-size: 12px; }
+
+    /* trade plan results */
+    .plan { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .plan h3 { font-size: 16px; font-weight: 700; color: var(--plum); margin-bottom: 2px; }
+    .plan .sub { font-size: 13.5px; color: var(--muted); }
+    .results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .res { border-radius: 14px; padding: 10px 8px; text-align: center; background: var(--blush); }
+    .res .k { font-size: 12.5px; color: var(--muted); }
+    .res .v { font-family: var(--mono); font-weight: 700; font-size: 16px; color: var(--plum); margin-top: 2px; }
+    .res .p { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+    .res.risk .v { color: var(--berry); }
+    .res.rew .v  { color: var(--sage); }
+    .plan-warn { display: none; margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--berry); }
+    .plan-warn.show { display: block; }
+
+    /* info section */
+    .info p { font-size: 15px; line-height: 1.5; margin-top: 4px; }
+    .info h4 { font-size: 15px; font-weight: 700; color: var(--plum); margin-top: 14px; }
+    .terms { margin-top: 6px; }
+    .term { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14.5px; line-height: 1.35; }
+    .term:first-child { border-top: none; }
+    .term b { font-family: var(--mono); color: var(--cream); background: var(--mauve); border-radius: 8px;
+      padding: 2px 0; width: 44px; text-align: center; flex-shrink: 0; font-size: 12.5px; height: 22px; line-height: 19px; }
+    .rules { list-style: none; margin-top: 6px; }
+    .rules li { font-size: 15px; padding: 5px 0 5px 24px; position: relative; }
+    .rules li::before { content: ''; position: absolute; left: 2px; top: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--berry); }
+
+    /* footer */
+    .btn-reset-lg {
+      width: 100%; border: none; border-radius: 18px; padding: 16px; margin-top: 6px;
+      background: var(--plum); color: var(--cream); font-size: 17px; font-weight: 700; cursor: pointer;
+    }
+    .btn-reset-lg:active { transform: scale(.985); }
+    .closing { text-align: center; margin-top: 24px; color: var(--plum); }
+    .closing .big { font-size: 22px; font-weight: 800; }
+    .closing .small { font-family: var(--mono); font-size: 12px; margin-top: 6px; color: var(--muted); }
+
+    /* modal */
+    .modal-bg {
+      position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center;
+      background: rgba(74, 61, 82, 0.45); padding: 24px;
+    }
+    .modal-bg.show { display: flex; }
+    .modal { background: #FFFBF6; border-radius: 22px; padding: 22px 20px 18px; max-width: 340px; width: 100%; text-align: center; }
+    .modal h3 { font-size: 20px; font-weight: 700; color: var(--plum); }
+    .modal p { font-size: 15px; color: var(--muted); margin-top: 6px; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-btns button { flex: 1; border-radius: 14px; padding: 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
+    .m-cancel { background: none; border: 1.5px solid var(--mauve); color: var(--plum); }
+    .m-ok { background: var(--berry); border: 1.5px solid var(--berry); color: #fff; }
+
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+<div class="bg-fixed"></div>
+
+<!-- STICKY HEADER -->
+<div class="sticky">
+  <div class="sticky-row">
+    <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+    <span class="count" id="count">0/0</span>
+    <button class="btn-reset-sm" onclick="askReset()">Reset</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="content">
+
+  <!-- HERO -->
+  <div class="hero">
+    <img src="logo.png" alt="The Trading Mom" />
+    <h1>Strategy Checklist</h1>
+    <p>Make a plan. Wait for your level. Wait for confirmation.</p>
+    <div class="flow">
+      <div class="flow-step"><span class="flow-tf">1H</span><span class="flow-q">Where?</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="flow-tf">15M</span><span class="flow-q">What?</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="flow-tf">5M</span><span class="flow-q">Confirm</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="flow-tf">1M</span><span class="flow-q">When?</span></div>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div class="card closed" id="card-info">
+    <div class="card-head" onclick="toggleCard('info')">
+      <div class="num">i</div>
+      <div class="head-text">
+        <div class="head-q">Before you start</div>
+        <div class="head-title">How this works</div>
+      </div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </div>
+    <div class="card-body info">
+      <p>The goal isn't to predict where price has to go. You make a plan, wait for price to come to your levels, and look for confirmation before entering.</p>
+      <p>Work top to bottom. Check a box only when it's actually done on your chart.</p>
+      <h4>Golden rules</h4>
+      <ul class="rules">
+        <li>No confirmation = NO TRADE.</li>
+        <li>Touching PDH or PDL is not an entry.</li>
+        <li>Don't chase. Wait for the retrace.</li>
+        <li>Never move your stop farther away.</li>
+      </ul>
+      <h4>Key terms</h4>
+      <div class="terms">
+        <div class="term"><b>PDH</b><span>Previous Day High: yesterday's highest price.</span></div>
+        <div class="term"><b>PDL</b><span>Previous Day Low: yesterday's lowest price.</span></div>
+        <div class="term"><b>FVG</b><span>Fair Value Gap: a 3-candle gap left by a fast move, where candles 1 and 3 don't overlap.</span></div>
+        <div class="term"><b>HL</b><span>Higher Low: a low that stays above the previous low.</span></div>
+        <div class="term"><b>LH</b><span>Lower High: a high that stays below the previous high.</span></div>
+        <div class="term"><b>LL</b><span>Lower Low: a low that breaks below the previous low.</span></div>
+        <div class="term"><b>HH</b><span>Higher High: a high that breaks above the previous high.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIRECTION -->
+  <div class="toggle">
+    <button class="dir-btn" data-dir="short" onclick="setDir('short')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 7 9 13 13 9 21 17"/><polyline points="15 17 21 17 21 11"/></svg>
+      <span class="t">Short</span><span class="c">Price at PDL</span>
+    </button>
+    <button class="dir-btn" data-dir="long" onclick="setDir('long')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
+      <span class="t">Long</span><span class="c">Price at PDH</span>
+    </button>
+  </div>
+
+  <div id="sections"></div>
+
+  <button class="btn-reset-lg" onclick="askReset()">Reset for the next trade</button>
+
+  <div class="closing">
+    <div class="big">Plan. Protect. Progress.</div>
+    <div class="small">Mindset &gt; Emotions &nbsp;&nbsp; Process &gt; Profit</div>
+  </div>
+</div>
+
+<!-- RESET MODAL -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeReset()">
+  <div class="modal">
+    <h3>Reset the checklist?</h3>
+    <p>This clears every box, answer, and number. Your PDH and PDL stay saved.</p>
+    <div class="modal-btns">
+      <button class="m-cancel" onclick="closeReset()">Cancel</button>
+      <button class="m-ok" onclick="doReset()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =============================================
+   STRATEGY CONTENT
+   Text can be a string, or {short, long} for
+   direction-aware wording.
+============================================= */
+const SECTIONS = [
+  {
+    id: 'where', num: 1, q: 'Where am I interested?', tf: '1H', title: 'Mark your map',
+    items: [
+      { id: 'w1', t: 'Open the 1-hour chart' },
+      { id: 'w2', t: 'Mark PDH', d: "Yesterday's highest price." },
+      { id: 'w3', t: 'Mark PDL', d: "Yesterday's lowest price." },
+      { id: 'w4', t: 'Mark the 1H FVGs you want to watch', d: 'Above and below price.' },
+      { id: 'w5', t: 'Skip any interrupted FVG', d: "If price already came back into it, don't mark it." },
+      { id: 'w6', t: 'Note your possible targets',
+        d: { short: 'The 1H FVGs below PDL.', long: 'The 1H FVGs above PDH.' } }
+    ],
+    levels: true,
+    note: { kind: 'tip', html: "<b>Don't enter here.</b> This is your roadmap." }
+  },
+  {
+    id: 'what', num: 2, q: 'What is price doing at my level?', tf: '15M', title: 'Wait for price',
+    items: [
+      { id: 'a1', t: 'Drop down to the 15-minute chart' },
+      { id: 'a2', t: { short: 'Price reaches PDL', long: 'Price reaches PDH' }, d: 'Let price come to your level.' },
+      { id: 'a3', t: 'Watch the reaction', d: 'What does price actually do around the level?' }
+    ],
+    gate: { id: 'level', q: { short: 'Did price reach PDL?', long: 'Did price reach PDH?' },
+            no: 'No trade yet. Keep waiting for your level.' },
+    note: { kind: 'warn', html: { short: '<b>Touching PDL does NOT mean you enter.</b>', long: '<b>Touching PDH does NOT mean you enter.</b>' } }
+  },
+  {
+    id: 'confirm', num: 3, q: 'Is the setup confirmed?', tf: '5M', title: 'Wait for confirmation',
+    items: [
+      { id: 'c1', t: 'Drop down to the 5-minute chart' },
+      { id: 'c2', t: { short: 'Price pushes below PDL and bounces', long: 'Price pushes above PDH and pulls back' },
+        d: { short: 'Mark that first low.', long: 'Mark that first high.' } },
+      { id: 'c3', t: { short: 'Price comes back down a second time', long: 'Price comes back up a second time' } },
+      { id: 'c4', t: { short: 'It holds above the first low', long: 'It holds below the first high' },
+        d: { short: "That's your higher low (HL).", long: "That's your lower high (LH)." } }
+    ],
+    gate: { id: 'conf', q: { short: 'Did you get the higher low?', long: 'Did you get the lower high?' },
+            no: 'No confirmation = NO TRADE.' }
+  },
+  {
+    id: 'when', num: 4, q: 'When might I enter?', tf: '1M', title: 'Find your entry',
+    items: [
+      { id: 'n1', t: 'Drop down to the 1-minute chart' },
+      { id: 'n2', t: { short: 'Wait for a lower low (LL)', long: 'Wait for a higher high (HH)' },
+        d: { short: 'Price breaks below the last 1-minute low.', long: 'Price breaks above the last 1-minute high.' } },
+      { id: 'n3', t: 'Mark the 1-minute FVG that move leaves behind', d: 'This is your entry area.' }
+    ],
+    gate: { id: 'fvg', q: 'Is there a 1M FVG from that move?', no: "No FVG, no entry. Don't chase price." }
+  },
+  {
+    id: 'exec', num: 5, q: 'Set the trade', tf: 'ENTRY', title: 'Entry, stop & target',
+    items: [
+      { id: 'e1', t: 'The full setup is there', chain: true },
+      { id: 'e2', t: { short: 'Sell limit in the 1M FVG', long: 'Buy limit in the 1M FVG' },
+        d: 'Wait for price to retrace into it. No chasing.' },
+      { id: 'e3', t: { short: 'Stop loss at the 5M FVG above', long: 'Stop loss at the 5M FVG below' },
+        d: 'Where the setup is invalid.' },
+      { id: 'e4', t: { short: 'Take profit at the next 1H FVG below', long: 'Take profit at the next 1H FVG above' } },
+      { id: 'e5', t: "Know how much you're willing to lose", d: 'Never move your stop farther away.' }
+    ],
+    plan: true
+  }
+];
+
+const CHAIN = {
+  short: ['PDL', 'Reaction', 'HL (5M)', 'LL (1M)', '1M FVG'],
+  long:  ['PDH', 'Reaction', 'LH (5M)', 'HH (1M)', '1M FVG']
+};
+
+// Dollar value per 1.0 point, per contract
+const INSTRUMENTS = [
+  ['MNQ', 2], ['NQ', 20], ['MES', 5], ['ES', 50], ['MYM', 0.5], ['YM', 5], ['MGC', 10], ['GC', 100]
+];
+
+/* =============================================
+   STATE (localStorage)
+============================================= */
+const KEY = 'tm_checklist_v1';
+const blank = () => ({
+  dir: 'short', checked: {}, gates: {}, closed: { info: true },
+  levels: { pdh: '', pdl: '' },
+  plan: { inst: 'MNQ', qty: '1', entry: '', stop: '', target: '' }
+});
+let S = blank();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) S = Object.assign(blank(), JSON.parse(raw));
+  } catch (e) { /* storage blocked: run without saving */ }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+}
+
+const pick = v => (v && typeof v === 'object') ? v[S.dir] : v;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* =============================================
+   RENDER
+============================================= */
+const CHECK_SVG = '<svg viewBox="0 0 12 10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 5 4.5 8.5 11 1"/></svg>';
+const CHEV_SVG = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>';
+
+function renderSections() {
+  const root = document.getElementById('sections');
+  root.innerHTML = SECTIONS.map(sec => {
+    const items = sec.items.map(it => {
+      const desc = it.chain
+        ? '<div class="chain">' + CHAIN[S.dir].map(c => `<span class="chip">${c}</span>`).join('<span class="ar">&rarr;</span>') + '</div>'
+        : (it.d ? `<div class="item-d">${pick(it.d)}</div>` : '');
+      return `<div class="item${S.checked[it.id] ? ' checked' : ''}" id="item-${it.id}" onclick="toggleItem('${it.id}')" role="checkbox" aria-checked="${!!S.checked[it.id]}" tabindex="0">
+        <div class="box">${CHECK_SVG}</div>
+        <div><div class="item-t">${pick(it.t)}</div>${desc}</div>
+      </div>`;
+    }).join('');
+
+    const levels = sec.levels ? `
+      <div class="fields">
+        <div class="field"><label for="pdh">PDH</label><input id="pdh" inputmode="decimal" placeholder="0.00" value="${esc(S.levels.pdh)}" oninput="setLevel('pdh', this.value)"></div>
+        <div class="field"><label for="pdl">PDL</label><input id="pdl" inputmode="decimal" placeholder="0.00" value="${esc(S.levels.pdl)}" oninput="setLevel('pdl', this.value)"></div>
+      </div>` : '';
+
+    const g = sec.gate;
+    const gate = g ? `
+      <div class="gate">
+        <div class="gate-q">${pick(g.q)}</div>
+        <div class="gate-btns">
+          <button class="gb${S.gates[g.id] === 'yes' ? ' yes' : ''}" onclick="setGate('${g.id}','yes')">Yes</button>
+          <button class="gb${S.gates[g.id] === 'no' ? ' no' : ''}" onclick="setGate('${g.id}','no')">No</button>
+        </div>
+      </div>
+      <div class="gate-msg${S.gates[g.id] === 'no' ? ' show' : ''}">${g.no}</div>` : '';
+
+    const note = sec.note ? `<div class="note${sec.note.kind === 'warn' ? ' warn' : ''}">${pick(sec.note.html)}</div>` : '';
+    const plan = sec.plan ? planHTML() : '';
+
+    return `<div class="card${S.closed[sec.id] ? ' closed' : ''}" id="card-${sec.id}">
+      <div class="card-head" onclick="toggleCard('${sec.id}')">
+        <div class="num">${sec.num}</div>
+        <div class="head-text"><div class="head-q">${sec.q}</div><div class="head-title">${sec.title}</div></div>
+        <span class="tf">${sec.tf}</span>
+        ${CHEV_SVG}
+      </div>
+      <div class="card-body">${items}${levels}${gate}${note}${plan}</div>
+    </div>`;
+  }).join('');
+}
+
+function planHTML() {
+  const p = S.plan;
+  const opts = INSTRUMENTS.map(([n]) => `<option${p.inst === n ? ' selected' : ''}>${n}</option>`).join('');
+  return `<div class="plan">
+    <h3>Trade plan</h3>
+    <div class="sub">Know your risk before you enter.</div>
+    <div class="fields">
+      <div class="field"><label for="inst">Market</label><select id="inst" onchange="setPlan('inst', this.value)">${opts}</select></div>
+      <div class="field"><label for="qty">Contracts</label><input id="qty" inputmode="numeric" value="${esc(p.qty)}" oninput="setPlan('qty', this.value)"></div>
+      <div class="field"><label for="entry">Entry (1M FVG)</label><input id="entry" inputmode="decimal" placeholder="0.00" value="${esc(p.entry)}" oninput="setPlan('entry', this.value)"></div>
+      <div class="field"><label for="stop">Stop (5M FVG)</label><input id="stop" inputmode="decimal" placeholder="0.00" value="${esc(p.stop)}" oninput="setPlan('stop', this.value)"></div>
+      <div class="field" style="grid-column: 1 / -1"><label for="target">Target (next 1H FVG)</label><input id="target" inputmode="decimal" placeholder="0.00" value="${esc(p.target)}" oninput="setPlan('target', this.value)"></div>
+    </div>
+    <div class="results">
+      <div class="res risk"><div class="k">Risk</div><div class="v" id="rRisk">&ndash;</div><div class="p" id="rRiskPts"></div></div>
+      <div class="res rew"><div class="k">Reward</div><div class="v" id="rRew">&ndash;</div><div class="p" id="rRewPts"></div></div>
+      <div class="res"><div class="k">R : R</div><div class="v" id="rRR">&ndash;</div><div class="p">&nbsp;</div></div>
+    </div>
+    <div class="plan-warn" id="planWarn"></div>
+  </div>`;
+}
+
+function renderPlanResults() {
+  const el = id => document.getElementById(id);
+  if (!el('rRisk')) return;
+  const p = S.plan;
+  const num = v => (v === '' || v == null) ? NaN : parseFloat(String(v).replace(/,/g, ''));
+  const e = num(p.entry), s = num(p.stop), t = num(p.target), q = num(p.qty) || 0;
+  const ppt = (INSTRUMENTS.find(i => i[0] === p.inst) || INSTRUMENTS[0])[1];
+  const money = v => (v < 0 ? '-' : '') + '$' + Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const pts = v => v.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' pts';
+
+  let warn = '';
+  el('rRisk').textContent = '–'; el('rRiskPts').textContent = '';
+  el('rRew').textContent = '–'; el('rRewPts').textContent = '';
+  el('rRR').textContent = '–';
+
+  if (!isNaN(e) && !isNaN(s)) {
+    const riskPts = S.dir === 'short' ? s - e : e - s;
+    if (riskPts <= 0) warn = S.dir === 'short' ? 'For a short, your stop goes above your entry.' : 'For a long, your stop goes below your entry.';
+    else { el('rRisk').textContent = money(riskPts * ppt * q); el('rRiskPts').textContent = pts(riskPts); }
+    if (!isNaN(t)) {
+      const rewPts = S.dir === 'short' ? e - t : t - e;
+      if (rewPts <= 0) warn = warn || (S.dir === 'short' ? 'For a short, your target goes below your entry.' : 'For a long, your target goes above your entry.');
+      else {
+        el('rRew').textContent = money(rewPts * ppt * q); el('rRewPts').textContent = pts(rewPts);
+        if (riskPts > 0) el('rRR').textContent = '1 : ' + (rewPts / riskPts).toFixed(1);
+      }
+    }
+  }
+  el('planWarn').textContent = warn;
+  el('planWarn').classList.toggle('show', !!warn);
+}
+
+function renderDir() {
+  document.querySelectorAll('.dir-btn').forEach(b => b.classList.toggle('on', b.dataset.dir === S.dir));
+}
+
+function allItems() { return SECTIONS.flatMap(s => s.items.map(i => i.id)); }
+
+function renderProgress() {
+  const ids = allItems();
+  const done = ids.filter(id => S.checked[id]).length;
+  document.getElementById('barFill').style.width = (done / ids.length * 100) + '%';
+  document.getElementById('count').textContent = `${done}/${ids.length}`;
+  SECTIONS.forEach(sec => {
+    const card = document.getElementById('card-' + sec.id);
+    const complete = sec.items.every(i => S.checked[i.id]) && (!sec.gate || S.gates[sec.gate.id] === 'yes');
+    if (card) card.classList.toggle('done', complete);
+  });
+}
+
+function renderStatus() {
+  const el = document.getElementById('status');
+  const gates = SECTIONS.filter(s => s.gate);
+  const no = gates.find(s => S.gates[s.gate.id] === 'no');
+  const allYes = gates.every(s => S.gates[s.gate.id] === 'yes');
+  el.className = 'status';
+  if (no) {
+    el.classList.add('flag');
+    el.innerHTML = '<span class="dot"></span>' + no.gate.no;
+  } else if (allYes) {
+    el.classList.add('clear');
+    el.innerHTML = '<span class="dot"></span>Setup confirmed. Wait for your retrace.';
+  } else {
+    const next = gates.find(s => S.gates[s.gate.id] !== 'yes');
+    el.innerHTML = '<span class="dot"></span>Next: ' + pick(next.gate.q);
+  }
+}
+
+function renderAll() {
+  renderDir();
+  renderSections();
+  renderProgress();
+  renderStatus();
+  renderPlanResults();
+}
+
+/* =============================================
+   ACTIONS
+============================================= */
+function toggleItem(id) {
+  S.checked[id] = !S.checked[id];
+  const el = document.getElementById('item-' + id);
+  el.classList.toggle('checked', S.checked[id]);
+  el.setAttribute('aria-checked', !!S.checked[id]);
+  save(); renderProgress();
+}
+function setGate(id, ans) {
+  S.gates[id] = S.gates[id] === ans ? undefined : ans;
+  save(); renderAll();
+}
+function setDir(dir) {
+  if (S.dir === dir) return;
+  S.dir = dir; save(); renderAll();
+}
+function toggleCard(id) {
+  S.closed[id] = !S.closed[id];
+  document.getElementById('card-' + id).classList.toggle('closed', S.closed[id]);
+  save();
+}
+function setLevel(k, v) { S.levels[k] = v; save(); }
+function setPlan(k, v) { S.plan[k] = v; save(); renderPlanResults(); }
+
+function askReset() { document.getElementById('modal').classList.add('show'); }
+function closeReset() { document.getElementById('modal').classList.remove('show'); }
+function doReset() {
+  const keep = { dir: S.dir, levels: S.levels, closed: S.closed, inst: S.plan.inst, qty: S.plan.qty };
+  S = blank();
+  S.dir = keep.dir; S.levels = keep.levels; S.closed = keep.closed;
+  S.plan.inst = keep.inst; S.plan.qty = keep.qty;
+  save(); closeReset(); renderAll();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// keyboard support for checklist rows
+document.addEventListener('keydown', e => {
+  const row = e.target.closest && e.target.closest('.item');
+  if (row && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); row.click(); }
+});
+
+load();
+document.getElementById('card-info').classList.toggle('closed', !!S.closed.info);
+renderAll();
+</script>
+</body>
+</html>
