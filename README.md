@@ -1,1 +1,1 @@
-# Trading-_Mom_Checklist
+# Trading_Mom_Checklist
